@@ -1,0 +1,11 @@
+executable(
+  'farSide',
+  'main.cpp',
+  'lexer.cpp',
+  'parser.cpp',
+  './includes/farSide.hh',
+  './includes/constructs.hh',
+  './includes/ast.hh',
+  './includes/lexer.hh',
+  './includes/parser.hh'
+)
