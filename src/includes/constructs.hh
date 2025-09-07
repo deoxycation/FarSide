@@ -3,9 +3,12 @@
 
 #include "./farSide.hh"
 
+#define NUM_ASCII 128
+
 namespace Fsc::Constructs {
   enum class State : unsigned short {
     START = 0,
+    ERROR, NUM_STATES
   };
 
   struct Token {
