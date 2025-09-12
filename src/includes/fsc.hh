@@ -3,6 +3,7 @@
 
 #include <array>
 #include <vector>
+#include <memory>
 #include <expected>
 #include <functional>
 #include <optional>

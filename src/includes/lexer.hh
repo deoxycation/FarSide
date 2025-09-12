@@ -19,12 +19,18 @@ class Lexer {
 
   constexpr TransitionTable buildTransitions();
   constexpr AcceptingsTable buildAcceptings();
-  State classify(const State subject);
-  std::expected<std::vector<Token>, Error> mainloop();
+  inline void reset();
+  inline void handleWhitespace();
+  inline void transition();
+  State classify(const std::string_view lexeme);
+  Token createToken();
+  std::unexpected<Error> createError(ErrorTypes type);
+  std::vector<std::expected<Token, Error>> mainloop();
 
   const std::string_view source;
   const TransitionTable transitions = buildTransitions();
   const AcceptingsTable acceptings = buildAcceptings();
+  std::vector<std::expected<Token, Error>> tokens = { };
   State last = State::START;
   std::optional<State> lastAccepted = std::nullopt;
   char c;
@@ -33,7 +39,7 @@ class Lexer {
   size_t initial = 0;
 
   public:
-  static const std::function<std::vector<Token>(std::string_view)> tokenize;
+  static const std::function<std::vector<std::expected<Token, Error>>(std::string_view)> tokenize;
 
   Lexer(std::string_view source) : source(source) { };
   ~Lexer() = default;

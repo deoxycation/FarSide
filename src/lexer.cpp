@@ -1,38 +1,5 @@
 #include "./includes/fsc.hh"
 
-/*
-
------ SYNTAX -----
-==================
-
-// Deterministic Symbols
-[[ NUMBER ]] [[ IDENTIFIER ]] [[ STRING ]] [[ CHAR ]]
-' "
-( ) [ ] { } , ;
-+ - / * % .. = += -= /= *= %= ..= -> => && || < > <= >= == != : . |
-++ -- !
-\\ \n \t \r \0
-
-// Ambiguous Syntax (resolved later)
--(unary)
-
-// "Unfinished" Symbols('~' is the wildcard)
-+~ -~ /~ *~ %~ ..~ =* |~ !~ .~ <~ >~ \~
-
-
-// Keywords (resolved via unordered hash-map)
-Number Int Float Natural String Char Boolean // Primitive Types
-Unit Nil True False // Atomic(Constants) Primitives (Note: "Unit" is both an atom and type)
-array("TYPE[]") fn("TYPE -> ... -> TYPE") struct interface class type data object record namespace // Derived types
-
-// Structuring Keywords
-for in while repeat until if elif else return expose
-
-// Compiler-Interfaces (CIs)
-@use @using @require
-
-*/
-
 constexpr Lexer::TransitionTable Lexer::buildTransitions() {
   TransitionTable transitions = { };
   
@@ -208,32 +175,107 @@ constexpr Lexer::AcceptingsTable Lexer::buildAcceptings() {
 
   acceptings[(size_t) State::INCREMENT] = true;
   acceptings[(size_t) State::DECREMENT] = true;
-
-  /*
-    // Keywords
-    KEYWORD_NUMBER, INT, FLOAT, NATURAL, STRING, CHAR, BOOLEAN,
-    UNIT, NIL, TRUE, FALSE,
-    STRUCT, INTERFACE, CLASS, TYPE, DATA,
-    OBJECT, RECORD, NAMESPACE,
-
-    FOR, IN, WHILE, REPEAT, UNTIL, IF,
-    ELIF, ELSE, RETURN, EXPOSE,
-
-    USE, USING, REQUIRE,
-    
-    ERROR, NUM_STATES
-  */
   
   return acceptings;
 }
 
-std::expected<std::vector<Token>, Error> Lexer::mainloop() {
-  std::vector<Token> tokens = { };
+State Lexer::classify(const std::string_view lexeme) {
+  static std::unordered_map<std::string_view, State> keywords = {
+    {"Number", State::KEYWORD_NUMBER}, {"Int", State::INT},
+    {"Float", State::FLOAT}, {"Natural", State::NATURAL},
+    {"String", State::STRING}, {"Char", State::CHAR},
+    {"Boolean", State::BOOLEAN}, {"Unit", State::UNIT},
+    {"nil", State::NIL}, {"true", State::TRUE},
+    {"false", State::FALSE}, {"struct", State::STRUCT},
+    {"interface", State::INTERFACE}, {"class", State::CLASS},
+    {"type", State::TYPE}, {"data", State::DATA},
+    {"object", State::OBJECT}, {"record", State::RECORD},
+    {"namespace", State::NAMESPACE}, {"for", State::FOR},
+    {"in", State::IN}, {"while", State::WHILE},
+    {"repeat", State::REPEAT}, {"until", State::UNTIL},
+    {"if", State::IF}, {"Number", State::ELIF},
+    {"else", State::ELSE}, {"return", State::RETURN},
+    {"expose", State::EXPOSE}, {"use", State::USE},
+    {"using", State::USING}, {"require", State::REQUIRE}
+  };
+
+  if (keywords.find(lexeme) != keywords.end()) {
+    return keywords[lexeme];
+  }
+  return State::IDENTIFIER;
+}
+
+inline void Lexer::reset() {
+  initial = pos;
+  lastAccepted.reset();
+  last = State::START;
+}
+
+inline void Lexer::handleWhitespace() {
+  while (c < source.size()) {
+    switch (c) {
+      case ' ': case '\t': case '\r':
+        pos++;
+        break;
+      case '\n':
+        lineNumber++;
+        pos++;
+        break;
+      default:
+        reset();
+        break; break;
+    }
+  }
+}
+
+Token Lexer::createToken() {
+  return Token(*lastAccepted, source.substr(initial, pos - initial), lineNumber, initial, pos);
+}
+
+std::unexpected<Error> Lexer::createError(ErrorTypes type) {
+  return std::unexpected<Error>((Error){ErrorTypes::UNKNOWN_TOKEN, source.substr(initial, pos - initial), lineNumber, initial, pos});
+}
+
+inline void Lexer::transition() {
+  last = transitions[(size_t) last][c];
+
+  if (acceptings[(size_t) last]) lastAccepted = last;
+
+  if (last == State::ERROR && lastAccepted) {
+    tokens.emplace_back(createToken());
+    reset();
+  } else if (last == State::ERROR) {
+    tokens.emplace_back(createError(ErrorTypes::UNKNOWN_TOKEN));
+    reset();
+  } else {
+    pos++;
+  }
+}
+
+std::vector<std::expected<Token, Error>> Lexer::mainloop() {
+  while (pos < source.size()) {
+    c = source[pos];
+    switch (c) {
+      case ' ': case '\t': case '\r': case '\n':
+        handleWhitespace();
+        break;
+      default:
+        transition();
+        break;
+    }
+  }
+
+  // Flushes final token
+  if (last == State::ERROR && lastAccepted) {
+    tokens.emplace_back(createToken());
+  } else if (lastAccepted) {
+    tokens.emplace_back(createError(ErrorTypes::UNKNOWN_TOKEN));
+  }
   
   return tokens;
 }
 
-const std::function<std::vector<Token>(std::string_view)> Lexer::tokenize = [](std::string_view input) {
+const std::function<std::vector<std::expected<Token, Error>>(std::string_view)> Lexer::tokenize = [](std::string_view input) {
   Lexer lexer(input);
-  return (lexer.mainloop().has_value()) ? lexer.mainloop().value() : (std::vector<Token>){ }; // write code to handle lexical errors before pushing
+  return lexer.mainloop();
 };

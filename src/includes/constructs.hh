@@ -36,7 +36,9 @@ for in while repeat until if elif else return expose
 */
 
 namespace Fsc::Constructs {
-  enum class Error : unsigned short { };
+  enum class ErrorTypes : unsigned short {
+    UNKNOWN_TOKEN
+  };
 
   enum class State : unsigned short {
     START = 0,
@@ -92,6 +94,19 @@ namespace Fsc::Constructs {
     
     ERROR, NUM_STATES
   };
+
+  struct Error {
+    public:
+    const ErrorTypes type;
+    const std::string_view lexeme;
+    const size_t lineNumber;
+    const size_t start;
+    const size_t end;
+    
+    Error(ErrorTypes type, std::string_view lexeme, size_t lineNumber, size_t start, size_t end)
+      : type(type), lexeme(lexeme), lineNumber(lineNumber), start(start), end(end) { };
+    ~Error() = default;
+  };
   
   struct Token {
     public:
@@ -126,8 +141,9 @@ namespace Fsc::Constructs {
   };
 }
 
-using Error = Fsc::Constructs::Error;
+using ErrorTypes = Fsc::Constructs::ErrorTypes;
 using State = Fsc::Constructs::State;
+using Error = Fsc::Constructs::Error;
 using Token = Fsc::Constructs::Token;
 template <typename T>
 using Compiler = Fsc::Constructs::Compiler<T>;
