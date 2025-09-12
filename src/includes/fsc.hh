@@ -15,6 +15,9 @@ namespace Fsc { // "Far-Side Code"
   class Parser;
 }
 
+// using Lexer = Fsc::Lexer;
+// using Parser = Fsc::Parser;
+
 #include "./constructs.hh"
 #include "./ast.hh"
 #include "./lexer.hh"

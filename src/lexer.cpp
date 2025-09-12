@@ -1,6 +1,6 @@
 #include "./includes/fsc.hh"
 
-constexpr Lexer::TransitionTable Lexer::buildTransitions() {
+constexpr Fsc::Lexer::TransitionTable Fsc::Lexer::buildTransitions() {
   TransitionTable transitions = { };
   
   for (size_t i = 0; i < (size_t) State::NUM_STATES; i++) {
@@ -118,7 +118,7 @@ constexpr Lexer::TransitionTable Lexer::buildTransitions() {
   return transitions;
 }
 
-constexpr Lexer::AcceptingsTable Lexer::buildAcceptings() {
+constexpr Fsc::Lexer::AcceptingsTable Fsc::Lexer::buildAcceptings() {
   AcceptingsTable acceptings = { };
   
   for (size_t i = 0; i < (size_t) State::NUM_STATES; i++) {
@@ -179,7 +179,7 @@ constexpr Lexer::AcceptingsTable Lexer::buildAcceptings() {
   return acceptings;
 }
 
-State Lexer::classify(const std::string_view lexeme) {
+State Fsc::Lexer::classify(const std::string_view lexeme) {
   static std::unordered_map<std::string_view, State> keywords = {
     {"Number", State::KEYWORD_NUMBER}, {"Int", State::INT},
     {"Float", State::FLOAT}, {"Natural", State::NATURAL},
@@ -205,13 +205,13 @@ State Lexer::classify(const std::string_view lexeme) {
   return State::IDENTIFIER;
 }
 
-inline void Lexer::reset() {
+inline void Fsc::Lexer::reset() {
   initial = pos;
   lastAccepted.reset();
   last = State::START;
 }
 
-inline void Lexer::handleWhitespace() {
+inline void Fsc::Lexer::handleWhitespace() {
   while (c < source.size()) {
     switch (c) {
       case ' ': case '\t': case '\r':
@@ -228,15 +228,15 @@ inline void Lexer::handleWhitespace() {
   }
 }
 
-Token Lexer::createToken() {
+Token Fsc::Lexer::createToken() {
   return Token(*lastAccepted, source.substr(initial, pos - initial), lineNumber, initial, pos);
 }
 
-std::unexpected<Error> Lexer::createError(ErrorTypes type) {
+std::unexpected<Error> Fsc::Lexer::createError(ErrorTypes type) {
   return std::unexpected<Error>((Error){ErrorTypes::UNKNOWN_TOKEN, source.substr(initial, pos - initial), lineNumber, initial, pos});
 }
 
-inline void Lexer::transition() {
+inline void Fsc::Lexer::transition() {
   last = transitions[(size_t) last][c];
 
   if (acceptings[(size_t) last]) lastAccepted = last;
@@ -252,7 +252,7 @@ inline void Lexer::transition() {
   }
 }
 
-std::vector<std::expected<Token, Error>> Lexer::mainloop() {
+std::vector<std::expected<Token, Error>> Fsc::Lexer::mainloop() {
   while (pos < source.size()) {
     c = source[pos];
     switch (c) {
@@ -275,7 +275,7 @@ std::vector<std::expected<Token, Error>> Lexer::mainloop() {
   return tokens;
 }
 
-const std::function<std::vector<std::expected<Token, Error>>(std::string_view)> Lexer::tokenize = [](std::string_view input) {
+const std::function<std::vector<std::expected<Token, Error>>(std::string_view)> Fsc::Lexer::tokenize = [](std::string_view input) {
   Lexer lexer(input);
   return lexer.mainloop();
 };

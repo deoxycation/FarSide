@@ -1,9 +1,9 @@
 executable(
-  'farSide',
+  'fsc',
   'main.cpp',
   'lexer.cpp',
   'parser.cpp',
-  './includes/farSide.hh',
+  './includes/fsc.hh',
   './includes/constructs.hh',
   './includes/ast.hh',
   './includes/lexer.hh',

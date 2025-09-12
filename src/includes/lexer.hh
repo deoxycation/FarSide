@@ -10,13 +10,12 @@
 #define UNFINISHED_UPPER (size_t) State::STRING_ESCAPE_START // exclusive; upper-unfinished bound
 #define UNFINISHED_DIFFERENCE (size_t) State::PLUS - (size_t) State::PLUS_UNFINISHED // Dif between unfinished and primitive ops
 
-using Lexer = Fsc::Lexer;
-
-class Lexer {
+class Fsc::Lexer {
   private:
   using TransitionTable = std::array<std::array<State, NUM_ASCII>, (size_t) State::NUM_STATES>;
   using AcceptingsTable = std::array<bool, (size_t) State::NUM_STATES>;
 
+  // Says their def cannot be found: ignore it
   constexpr TransitionTable buildTransitions();
   constexpr AcceptingsTable buildAcceptings();
   inline void reset();

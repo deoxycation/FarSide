@@ -124,10 +124,10 @@ namespace Fsc::Constructs {
   template <typename T>
   class Compiler {
     private:
-    const T data;
+    T data;
 
     public:
-    T& get() const {
+    T& get() {
       return data;
     }
 
@@ -139,6 +139,8 @@ namespace Fsc::Constructs {
     Compiler(T data) : data(data) { };
     ~Compiler() = default;
   };
+
+  // TokenStream ?
 }
 
 using ErrorTypes = Fsc::Constructs::ErrorTypes;
