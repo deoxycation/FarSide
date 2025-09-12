@@ -1,7 +1,7 @@
 #ifndef __PARSER_FCS__
 #define __PARSER_FCS__
 
-#include "./farSide.hh"
+#include "./fsc.hh"
 
 class Fsc::Parser {
   private:
